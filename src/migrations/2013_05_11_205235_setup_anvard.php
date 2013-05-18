@@ -14,9 +14,11 @@ class SetupAnvard extends Migration {
     {
         Schema::create(Config::get('anvard::db.profilestable'), function(Blueprint $t)
         {
+            $fk = Config::get('anvard::db.profilestableforeignkey');
+            $fkTable = Config::get('anvard::db.userstable');
             // Create the profiles table, and link it to the users table
             $t->increments('id');
-            $t->integer(Config::get('anvard::db.profilestableforeignkey'));
+            $t->integer($fk)->unsigned();
             $t->string('provider');
             $t->string('identifier');
             $t->string('webSiteURL')->nullable(); 
@@ -40,6 +42,7 @@ class SetupAnvard extends Migration {
             $t->string('region')->nullable();
             $t->string('city')->nullable();
             $t->string('zip')->nullable();
+            $t->foreign($fk)->references('id')->on($fkTable)->onDelete('cascade')->onUpdate('cascade');
             $t->timestamps();
         });
     }

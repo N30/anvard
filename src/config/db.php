@@ -1,10 +1,10 @@
 <?php
 return array(
     /* The name of the User model */
-    'usermodel' => 'User',
+    'usermodel' => 'Atticmedia\\Anvard\\Models\\User',
 
     /* The name of the Profile model */
-    'profilemodel' => 'Profile',
+    'profilemodel' => 'Atticmedia\\Anvard\\Models\\Profile',
 
     /* The hasMany name for the profiles of a given user */
     'userprofiles' => 'profiles',

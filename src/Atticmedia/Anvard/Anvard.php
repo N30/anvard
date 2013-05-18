@@ -4,6 +4,7 @@ use Hybrid_Auth;
 use Hybrid_Provider_Adapter;
 use Hybrid_User_Profile;
 use Illuminate\Log\Writer;
+use Atticmedia\Anvard\Models\User as User;
 
 class Anvard {
 
@@ -55,7 +56,7 @@ class Anvard {
      */
     public function getProfile($network = NULL, $user = NULL) {
         if ( $user === NULL ) {
-            $user = Auth::user();
+            $user = User::find(Auth::user()->id);
             if (!$user) {
                 return NULL;
             }
@@ -138,38 +139,44 @@ class Anvard {
         return $this->adapter_profile;
     }
 
-    protected function findProfile() {
-        $adapter_profile = $this->getAdapterProfile();
-        $ProfileModel = $this->config['db']['profilemodel'];
-        $UserModel = $this->config['db']['usermodel'];
-        $user = NULL;
-
-        // Have they logged in with this provider before?
-        $profile_builder = call_user_func_array(
-            "$ProfileModel::where",
-            array('provider', $this->provider)
-        );
-        $profile = $profile_builder
-            ->where('identifier', $adapter_profile->identifier)
+    public function getProfile($adapterProfile)
+    {
+        $profileModel = $this->config['db']['profilemodel'];
+        // See if the current social profile already exists in the profiles table
+        $profile = $profileModel::with(array('user'))
+            ->whereProvider($this->provider)
+            ->whereIdentifier($adapterProfile->identifier)
             ->first();
-        if ($profile) {
+        return $profile;
+    }
+
+    protected function getUser($adapterProfile)
+    {
+        if ($profile = $this->getProfile($adapterProfile)) {
             // ok, we found an existing user
-            $user = $profile->user()->first();
+            $user = $profile->user;
             $this->logger->debug('Anvard: found a profile, id='.$profile->id);
-        } elseif ($adapter_profile->email) {
+        } else {
             $this->logger->debug('Anvard: could not find profile, looking for email');
             // ok it's a new profile ... can we find the user by email?
-            $user_builder = call_user_func_array(
-                "$UserModel::where",
-                array('email', $adapter_profile->email)
-            );
-            $user = $user_builder
+            $userModel = $this->config['db']['usermodel'];
+            $user = $userModel::newQuery()
+                ->whereEmail($adapterProfile->email)
                 ->first();
         }
-        // If we haven't found a user, we need to create a new one
-        if (!$user) {
-            $this->logger->debug('Anvard: did not find user, creating');
-            $user = new $UserModel();
+        return $user;
+    }
+
+    protected function findProfile()
+    {
+        $adapterProfile = $this->getAdapterProfile();
+
+        // Everything is a-ok already so just return the user profile
+        if($user = $this->getUser($adapterProfile)) return $user->profile;
+        $userModel = $this->config['db']['usermodel'];
+        
+        $this->logger->debug('Anvard: did not find user, creating');
+        $user = new $UserModel();
             // map in anything from the profile that we want in the User
             $map = $this->config['db']['profiletousermap'];
             foreach ($map as $apkey => $ukey) {
