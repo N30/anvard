@@ -141,8 +141,7 @@ class Anvard {
             $this->logger->debug('Anvard: could not find profile, looking for email');
             // ok it's a new profile ... can we find the user by email?
             $userModel = $this->config['db']['usermodel'];
-            $user = $userModel::newQuery()
-                ->whereEmail($adapterProfile->email)
+            $user = $userModel::whereEmail($adapterProfile->email)
                 ->first();
         }
         return $user;

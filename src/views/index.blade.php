@@ -4,7 +4,7 @@
     <ul>
     @foreach ($providers as $provider)
         <li>
-            {{ link_to_route('anvard.routes.login', $provider, $provider) }}
+            {{ link_to_route('anvard::routes.login', $provider, $provider) }}
         </li>
     @endforeach
     </ul>

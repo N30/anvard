@@ -1,6 +1,8 @@
 <?php namespace Atticmedia\Anvard\Controllers;
 
+use Config, App, View, Session, Redirect, Log;
 use Illuminate\Routing\Controllers\Controller;
+use Hybrid_Endpoint;
 
 class AnvardController extends Controller {
 	

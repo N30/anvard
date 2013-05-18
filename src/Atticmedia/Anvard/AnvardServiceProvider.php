@@ -41,7 +41,7 @@ class AnvardServiceProvider extends ServiceProvider {
         $this->app['hybridauth'] = $this->app->share(function($app) {
             $config = $app['config'];
             $haconfig = $config['anvard::hybridauth'];
-            $haconfig['base_url'] = $app['url']->route('anvard.routes.endpoint');
+            $haconfig['base_url'] = $app['url']->route('anvard::routes.endpoint');
             $instance = new Hybrid_Auth($haconfig);
             return $instance;
         });
