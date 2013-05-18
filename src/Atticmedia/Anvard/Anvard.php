@@ -29,7 +29,7 @@ class Anvard {
      * 
      * @var Hybrid_User_Profile
      */
-    protected $adapter_profile;
+    protected $adapterProfile;
 
     /**
      * The name of the current provider,
@@ -48,25 +48,6 @@ class Anvard {
 
     public function __construct($config) {
         $this->config = $config;
-    }
-
-    /**
-     * Get a social profile for a user, optionally specifying
-     * which social network to get, and which user to query
-     */
-    public function getProfile($network = NULL, $user = NULL) {
-        if ( $user === NULL ) {
-            $user = User::find(Auth::user()->id);
-            if (!$user) {
-                return NULL;
-            }
-        }
-        if ($network === NULL) {
-            $profile = $user->profiles()->first();
-        } else {
-            $profile = $user->profiles()->where('network', $network)->first();
-        }
-        return $profile;
     }
 
     public function getProviders() {
@@ -129,14 +110,14 @@ class Anvard {
     }
 
     public function setAdapterProfile(Hybrid_User_Profile $profile) {
-        $this->adapter_profile = $profile;
+        $this->adapterProfile = $profile;
     }
 
     /**
      * @return Hybrid_User_Profile
      */
     public function getAdapterProfile() {
-        return $this->adapter_profile;
+        return $this->adapterProfile;
     }
 
     public function getProfile($adapterProfile)
@@ -152,10 +133,10 @@ class Anvard {
 
     protected function getUser($adapterProfile)
     {
-        if ($profile = $this->getProfile($adapterProfile)) {
+        if($profile = $this->getProfile($adapterProfile)) {
             // ok, we found an existing user
             $user = $profile->user;
-            $this->logger->debug('Anvard: found a profile, id='.$profile->id);
+            $this->logger->debug('Anvard: found a user, id='.$profile->user->id);
         } else {
             $this->logger->debug('Anvard: could not find profile, looking for email');
             // ok it's a new profile ... can we find the user by email?
@@ -167,76 +148,65 @@ class Anvard {
         return $user;
     }
 
+	protected function createUserFromProfile($adapterProfile)
+	{
+        $this->logger->debug('Anvard: did not find user, creating');
+        // Create a new user to attach the profile to
+        $userModel = $this->config['db']['usermodel'];
+        $user = new $userModel();
+        // map in anything from the profile that we want in the User
+        $map = $this->config['db']['profiletousermap'];
+        foreach ($map as $apkey => $ukey) {
+            $user->$ukey = $adapterProfile->$apkey;
+        }
+        $values = $this->config['db']['uservalues'];
+        foreach ( $values as $key=>$value ) {
+            if (is_callable($value)) {
+                $user->$key = $value($user, $adapterProfile);
+            } else {
+                $user->$key = $value;
+            }
+        }
+        $result = $user->save();
+        if ( !$result ) {
+            $this->logger->error('Anvard: FAILED TO SAVE USER');
+            return NULL;
+        }
+		return $user;
+	}
+
     protected function findProfile()
     {
         $adapterProfile = $this->getAdapterProfile();
-
         // Everything is a-ok already so just return the user profile
         if($user = $this->getUser($adapterProfile)) return $user->profile;
-        $userModel = $this->config['db']['usermodel'];
-        
-        $this->logger->debug('Anvard: did not find user, creating');
-        $user = new $UserModel();
-            // map in anything from the profile that we want in the User
-            $map = $this->config['db']['profiletousermap'];
-            foreach ($map as $apkey => $ukey) {
-                $user->$ukey = $adapter_profile->$apkey;
-            }
-            $values = $this->config['db']['uservalues'];
-            foreach ( $values as $key=>$value ) {
-                if (is_callable($value)) {
-                    $user->$key = $value($user, $adapter_profile);
-                } else {
-                    $user->$key = $value;
-                }
-            }
-            // @todo this is all very custom ... how to fix?
-            $user->role_id = 3;
-            $user->username = $adapter_profile->email;
-            $user->email = $adapter_profile->email;
-            $user->password = uniqid();
-            $user->password_confirmation = $user->password;
-            $rules = $this->config['db']['userrules'];
-            $result = $user->save($rules);
-            if ( !$result ) {
-                $this->logger->error('Anvard: FAILED TO SAVE USER');
-                return NULL;
-            }
+		// Or, create a new user record
+		$user = $this->createUserFromProfile($adapterProfile);
+		// Everything is a-ok, just return the profile
+        if($profile = $this->getProfile($adapterProfile)) return $profile;
+        // Profile doesn't exist in DB yet so create it and attach it to $user
+        $profile = $this->createProfileFromAdapterProfile($adapterProfile, $user);
+        $this->logger->info('Anvard: succesful login!');
+		// Return the profile
+        return $profile;
+    }
+
+    protected function createProfileFromAdapterProfile($adapterProfile, $user) {
+        $profileModel = $this->config['db']['profilemodel'];
+        $attributes['provider'] = $this->provider;
+        // @todo use config value for foreign key name
+        $attributes['user_id'] = $user->id;
+        $profile = new $profileModel($attributes);
+        $attributes = get_object_vars($adapterProfile);
+        foreach ($attributes as $k=>$v) {
+            $profile->$k = $v;
         }
-        if (!$profile) {
-            // If we didn't find the profile, we need to create a new one
-            $profile = $this->createProfileFromAdapterProfile($adapter_profile, $user);
-        } else {
-            // If we did find a profile, make sure we update any changes to the source
-            $profile = $this->applyAdapterProfileToExistingProfile($adapter_profile, $profile);
-        }
-        $result = $profile->save();
+		$result = $profile->save();
         if (!$result) {
             $this->logger->error('Anvard: FAILED TO SAVE PROFILE');
             return NULL;
         }
-        $this->logger->info('Anvard: succesful login!');
-        return $profile;
-
-    }
-
-    protected function createProfileFromAdapterProfile($adapter_profile, $user) {
-        $ProfileModel = $this->config['db']['profilemodel'];
-        $attributes['provider'] = $this->provider;
-        // @todo use config value for foreign key name
-        $attributes['user_id'] = $user->id;
-        $profile = new $ProfileModel($attributes);
-        $profile = $this->applyAdapterProfileToExistingProfile($adapter_profile, $profile);
         return $profile;
     }
-
-    protected function applyAdapterProfileToExistingProfile($adapter_profile, $profile) {
-        $attributes = get_object_vars($adapter_profile);
-        foreach ($attributes as $k=>$v) {
-            $profile->$k = $v;
-        }
-        return $profile;
-    }
-
 
 }
