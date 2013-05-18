@@ -6,7 +6,7 @@ class AnvardController extends Controller {
 	
 	public function index()
 	{
-		$view = Config::get('anvard::views.index');
+        $view = Config::get('anvard::views.index');
         $anvard = App::make('anvard');
         $providers = $anvard->getProviders();
         return View::make($view, compact('providers'));
@@ -19,13 +19,18 @@ class AnvardController extends Controller {
         $profile = App::make('anvard')->attemptAuthentication($provider, $hybridAuth);
         Log::debug('Anvard: login attempt complete');
         if ($profile) {
-            Log::debug('Anvard: login success');
+			Log::debug('Anvard: login success');
             Auth::loginUsingId($profile->user->id);
         } else {
-            Log::debug('Anvard: login failure');
+			Log::debug('Anvard: login failure');
             Session::flash('anvard', 'Failed to log in!');
         }
         return Redirect::back();
 	}
 	
+	public function endpoint()
+	{
+		Hybrid_Endpoint::process();
+	}
+
 }
