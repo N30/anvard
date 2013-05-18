@@ -192,10 +192,10 @@ class Anvard {
 
     protected function createProfileFromAdapterProfile($adapterProfile, $user) {
         $profileModel = $this->config['db']['profilemodel'];
-        $attributes['provider'] = $this->provider;
-        // @todo use config value for foreign key name
-        $attributes['user_id'] = $user->id;
-        $profile = new $profileModel($attributes);
+        $userFk = Config::get('anvard::db.profilestableforeignkey','user_id');
+        $profile = new $profileModel();
+        $profile->$userFk = $user->id;
+        $profile->provider = $this->provider;
         $attributes = get_object_vars($adapterProfile);
         foreach ($attributes as $k=>$v) {
             $profile->$k = $v;
