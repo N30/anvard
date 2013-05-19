@@ -5,6 +5,7 @@ use Hybrid_Provider_Adapter;
 use Hybrid_User_Profile;
 use Illuminate\Log\Writer;
 use Atticmedia\Anvard\Models\User as User;
+use Config;
 
 class Anvard {
 
@@ -128,21 +129,21 @@ class Anvard {
             ->whereProvider($this->provider)
             ->whereIdentifier($adapterProfile->identifier)
             ->first();
+        // Profile doesn't exist in DB yet so create it and attach it to $user
+        if(!$profile) $profile = $this->createProfileFromAdapterProfile($adapterProfile);
         return $profile;
     }
 
     protected function getUser($adapterProfile)
     {
-        if($profile = $this->getProfile($adapterProfile)) {
-            // ok, we found an existing user
-            $user = $profile->user;
-            $this->logger->debug('Anvard: found a user, id='.$profile->user->id);
-        } else {
-            $this->logger->debug('Anvard: could not find profile, looking for email');
-            // ok it's a new profile ... can we find the user by email?
-            $userModel = $this->config['db']['usermodel'];
-            $user = $userModel::whereEmail($adapterProfile->email)
-                ->first();
+        $userModel = $this->config['db']['usermodel'];
+        $user = $userModel::whereEmail($adapterProfile->email)
+            ->first();
+        if(!$user) $user = $this->createUserFromProfile($adapterProfile);
+        $result = $user->save();
+        if ( !$result ) {
+            $this->logger->error('Anvard: FAILED TO SAVE USER');
+            return NULL;
         }
         return $user;
     }
@@ -154,55 +155,52 @@ class Anvard {
         $userModel = $this->config['db']['usermodel'];
         $user = new $userModel();
         // map in anything from the profile that we want in the User
+        // Don't really need this right now...
         $map = $this->config['db']['profiletousermap'];
         foreach ($map as $apkey => $ukey) {
             $user->$ukey = $adapterProfile->$apkey;
         }
-        $values = $this->config['db']['uservalues'];
+        /*$values = $this->config['db']['uservalues'];
         foreach ( $values as $key=>$value ) {
             if (is_callable($value)) {
                 $user->$key = $value($user, $adapterProfile);
             } else {
                 $user->$key = $value;
             }
-        }
-        $result = $user->save();
-        if ( !$result ) {
-            $this->logger->error('Anvard: FAILED TO SAVE USER');
-            return NULL;
-        }
+        }*/
 		return $user;
 	}
 
     protected function findProfile()
     {
         $adapterProfile = $this->getAdapterProfile();
-        // Everything is a-ok already so just return the user profile
-        if($user = $this->getUser($adapterProfile)) return $user->profile;
-		// Or, create a new user record
-		$user = $this->createUserFromProfile($adapterProfile);
-		// Everything is a-ok, just return the profile
-        if($profile = $this->getProfile($adapterProfile)) return $profile;
-        // Profile doesn't exist in DB yet so create it and attach it to $user
-        $profile = $this->createProfileFromAdapterProfile($adapterProfile, $user);
+        $profile = $this->getProfile($adapterProfile);
+        if(!($user = $profile->user)) $user = $this->getUser($adapterProfile);
+        $profile = $this->attachProfileToUser($profile, $user);
         $this->logger->info('Anvard: succesful login!');
 		// Return the profile
         return $profile;
     }
 
-    protected function createProfileFromAdapterProfile($adapterProfile, $user) {
+    protected function createProfileFromAdapterProfile($adapterProfile) {
         $profileModel = $this->config['db']['profilemodel'];
-        $userFk = Config::get('anvard::db.profilestableforeignkey','user_id');
         $profile = new $profileModel();
-        $profile->$userFk = $user->id;
         $profile->provider = $this->provider;
         $attributes = get_object_vars($adapterProfile);
         foreach ($attributes as $k=>$v) {
             $profile->$k = $v;
         }
-		$result = $profile->save();
-        if (!$result) {
-            $this->logger->error('Anvard: FAILED TO SAVE PROFILE');
+        return $profile;
+    }
+    
+    protected function attachProfileToUser($profile,$user)
+    {
+        $userFk = Config::get('anvard::db.profilestableforeignkey','user_id');
+        if($profile->$userFk == $user->id) return $profile;
+        $profile->$userFk = $user->id;
+        $result = $profile->save();
+        if ( !$result ) {
+            $this->logger->error('Anvard: FAILED TO ATTACH PROFILE TO USER');
             return NULL;
         }
         return $profile;

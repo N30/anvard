@@ -1,8 +1,9 @@
 <?php namespace Atticmedia\Anvard\Controllers;
 
-use Config, App, View, Session, Redirect, Log;
+use Config, App, View, Session, Redirect, Log, Auth;
 use Illuminate\Routing\Controllers\Controller;
 use Hybrid_Endpoint;
+use Hybrid_Provider_Adapter;
 
 class AnvardController extends Controller {
 	
@@ -27,12 +28,25 @@ class AnvardController extends Controller {
 			Log::debug('Anvard: login failure');
             Session::flash('anvard', 'Failed to log in!');
         }
-        return Redirect::back();
+        //Hybrid_Endpoint::process();
+        return Redirect::to('/');
 	}
+    
+    public function logout($provider)
+    {
+        $hybridAuth = App::make('hybridauth');
+        $anvard = App::make('anvard');
+        $profile = $anvard->attemptAuthentication($provider, $hybridAuth);
+        $adapter = $anvard->getAdapter();
+        $adapter->logout();
+        Auth::logout();
+        return Redirect::back();
+    }
 	
 	public function endpoint()
 	{
 		Hybrid_Endpoint::process();
+        return Redirect::to('/');
 	}
 
 }
