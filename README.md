@@ -1,6 +1,8 @@
 Anvard - HybridAuth package for Laravel 4
 =========================================
 
+This package is a fork of the original [Anvard from Atticmedia](https://bitbucket.org/atticmedia/anvard).
+
 ## Requirements
 
 * Laravel 4
