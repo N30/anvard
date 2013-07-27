@@ -3,8 +3,8 @@
 use Eloquent;
 use Config;
 
-class Profile extends Eloquent {
-    
+class Profile extends Eloquent
+{
     public function __construct(array $attributes = array())
     {
         parent::__construct();
@@ -15,5 +15,4 @@ class Profile extends Eloquent {
     {
         return $this->belongsTo('\\Atticmedia\\Anvard\\Models\\User');
     }
-    
 }

@@ -1,31 +1,20 @@
 <?php
 return array(
-
     // 'base_url' => URL::route(Config::get('anvard::routes.login')),
-
-    'providers' => array (
-
-
-        'facebook' => array (
+    'providers' => array(
+        'facebook' => array(
             'enabled' => true,
             'keys'    => array ( 'id' => '', 'secret' => '' ),
         ),
 
-        'twitter' => array (
+        'twitter' => array(
             'enabled' => true,
-            'keys'    => array ( 'key' => '', 'secret' => '' )
+            'keys'    => array( 'key' => '', 'secret' => '' )
         ),
 
-        'linkedIn' => array (
+        'linkedIn' => array(
             'enabled' => true,
-            'keys'    => array ( 'key' => '', 'secret' => '' )
+            'keys'    => array( 'key' => '', 'secret' => '' )
         ),
     )
-
-
-
-
-
-
-
 );

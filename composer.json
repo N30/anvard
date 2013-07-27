@@ -1,8 +1,12 @@
 {
-    "name": "codenamegary/anvard",
+    "name": "onigoetz/anvard",
     "description": "Fork of Atticmedia/Anvard - HybridAuth social sign in package for Laravel 4",
-    "homepage": "https://bitbucket.org/codenamegary/anvard",
+    "homepage": "https://github.com/onigoetz/anvard",
     "authors": [
+        {
+            "name": "Stéphane Goetz",
+            "email": "gary@powrit.com"
+        },
         {
             "name": "Gary Saunders",
             "email": "gary@powrit.com"
@@ -16,10 +20,6 @@
             "email": "me@alaabadran.com"
         }
     ],
-    "support": {
-        "email": "gary@powrit.com", 
-        "issues": "https://bitbucket.org/codenamegary/anvard/issues"
-    },
     "require": {
         "php": ">=5.3.0",
         "illuminate/support": "4.0.x",

@@ -3,8 +3,8 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class SetupAnvard extends Migration {
-
+class SetupAnvard extends Migration
+{
     /**
      * Run the migrations.
      *
@@ -12,8 +12,7 @@ class SetupAnvard extends Migration {
      */
     public function up()
     {
-        Schema::create(Config::get('anvard::db.profilestable'), function(Blueprint $t)
-        {
+        Schema::create(Config::get('anvard::db.profilestable'), function(Blueprint $t) {
             $fk = Config::get('anvard::db.profilestableforeignkey');
             $fkTable = Config::get('anvard::db.userstable');
             // Create the profiles table, and link it to the users table
@@ -21,7 +20,7 @@ class SetupAnvard extends Migration {
             $t->integer($fk)->unsigned();
             $t->string('provider');
             $t->string('identifier');
-            $t->string('webSiteURL')->nullable(); 
+            $t->string('webSiteURL')->nullable();
             $t->string('profileURL')->nullable();
             $t->string('photoURL')->nullable();
             $t->string('displayName')->nullable();
@@ -56,5 +55,4 @@ class SetupAnvard extends Migration {
     {
         Schema::drop(Config::get('anvard::db.profilestable'));
     }
-
 }

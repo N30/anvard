@@ -13,7 +13,7 @@ This package is a fork of the original [Anvard from Atticmedia](https://bitbucke
 
 ## Installation
 
-1. Add the dependency to your composer.json file: `"atticmedia-anvard": "*"`
+1. Add the dependency to your composer.json file: `"onigoetz/anvard": "*"`
 2. Run `php composer.phar install`
 3. Add `'Atticmedia\Anvard\AnvardServiceProvider',` to your `config/app.php` file
 3. Publish the package config `php artisan config:publish atticmedia/anvard`
@@ -23,19 +23,19 @@ This package is a fork of the original [Anvard from Atticmedia](https://bitbucke
 7. Create the `Profile` model (using a different name if you changed the config)
 8. Set the User to have many Profiles:
 
-    ```
-        public function profiles() {
-            return $this->hasMany('Profile');
-        }
-    ```
+```php
+public function profiles() {
+    return $this->hasMany('Profile');
+}
+```
 
 9. Set the Profile to belong to a User:
 
-    ```
-        public function user() {
-            return $this->belongsTo('User');
-        }
-    ```
+```php
+public function user() {
+    return $this->belongsTo('User');
+}
+```
 
 ## Configuration
 
@@ -43,7 +43,7 @@ Anvard comes with several configuration files, and you *must* edit at least one 
 
 Before you can run Anvard, you need to publish out the packages config files to your own app - which you can easily do using artisan:
 
-```php
+```bash
 artisan config:publish atticmedia/anvard
 ```
 
@@ -68,11 +68,11 @@ Hopefully most of the values in this file are self explanatory, the exceptions b
 
 > #### profilestousersmap
 > 
-This is used when a new user is created from a social login.  It is a reasonably common case that you will have some properties on User that are mapped to Profiles, but you may want to keep them directly in the User model to make your life easier when > dealing with users who were not registered using this method.
+> This is used when a new user is created from a social login.  It is a reasonably common case that you will have some properties on User that are mapped to Profiles, but you may want to keep them directly in the User model to make your life easier when > dealing with users who were not registered using this method.
 > 
-Specifying this will map fields from the Profile to the newly > created User.
+> Specifying this will map fields from the Profile to the newly > created User.
 > 
-Keys are attribute names from the Profile (which mirrors the original HybridAuth Adapter) and values are attribute names on the User model.
+> Keys are attribute names from the Profile (which mirrors the original HybridAuth Adapter) and values are attribute names on the User model.
 > 
 > #### userrules
 > 
