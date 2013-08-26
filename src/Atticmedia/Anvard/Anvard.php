@@ -150,13 +150,14 @@ class Anvard
         $userModel = $this->config['db']['usermodel'];
         $user = $userModel::whereEmail($adapterProfile->email)
             ->first();
-        if(!$user) $user = $this->createUserFromProfile($adapterProfile);
-        $result = $user->save();
-        if (!$result) {
-            $this->logger->error('Anvard: FAILED TO SAVE USER');
-
-            return NULL;
-        }
+        if(!$user) {
+			$user = $this->createUserFromProfile($adapterProfile);
+	        $result = $user->save();
+			if (!$result) {
+				$this->logger->error('Anvard: FAILED TO SAVE USER');
+				return NULL;
+			}
+		}
 
         return $user;
     }
